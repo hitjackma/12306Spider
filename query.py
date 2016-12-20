@@ -16,7 +16,7 @@ from openpyxl import Workbook
 # Set default encoding to utf-8
 reload(sys)
 sys.setdefaultencoding('utf-8')
-requests.packages.urllib3.disable_warnings()
+# requests.packages.urllib3.disable_warnings()
 
 # 全局变量
 PWD = sys.path[0]
@@ -34,12 +34,13 @@ EXCEL_SHEET_NUMBER = 24
 cityList = []
 START_EXCEL_NAME = 'start.xlsx'
 ARRIVE_EXCEL_NAME = 'arrive.xlsx'
+SUM_EXCEL_NAME = 'sum.xlsx'
 startWB = Workbook()
 arriveWB = Workbook()
-
+sumWB = Workbook()
 
 def queryTickets(queryDate, from_station_code, to_station_code):
-    time.sleep(2)
+    time.sleep(1)
     parameters = [
         ('leftTicketDTO.train_date', queryDate),
         ('leftTicketDTO.from_station', from_station_code),
@@ -80,6 +81,7 @@ def queryTickets(queryDate, from_station_code, to_station_code):
             outfile.close()
             startWB.save(SAVE_PATH + START_EXCEL_NAME)
             startWB.save(SAVE_PATH + ARRIVE_EXCEL_NAME)
+            sumWB.save(SAVE_PATH + SUM_EXCEL_NAME)
             print "休息23秒，准备重新启动程序"
             time.sleep(23)
             start()
@@ -99,7 +101,7 @@ def queryTickets(queryDate, from_station_code, to_station_code):
 
 # 根据cityLookUp初始化stationNameCodeMap 和 stationCodeNameMap
 def initStation():
-    f = codecs.open(PWD + "\\cityLookUp.txt", "r")
+    f = codecs.open(PWD + "/cityLookUp.txt", "r")
     data = f.readline()
     f.close()
     station_list = data.split('@')
@@ -112,7 +114,7 @@ def initStation():
         if len(items) < 5:
             print(u'忽略无效站点: %s' % (items))
             continue
-        stationNameCodeMap[items[1]] = items[2]
+        stationNameCodeMap[items[1].decode('utf-8')] = items[2]
         stationCodeNameMap[items[2]] = items[1]
     return stationNameCodeMap
 
@@ -147,7 +149,7 @@ def start():
     for fromCityIndex in range(len(cityList)):
 
         fromCity = cityList[fromCityIndex]
-        fromCity = fromCity.split('\n')[0]
+        fromCity = fromCity.split('\r')[0].decode('utf-8')
         if startCityFind:
             pass
         else:
@@ -163,7 +165,7 @@ def start():
 
         for toCityIndex in range(len(cityList)):
             toCity = cityList[toCityIndex]
-            toCity = toCity.split('\n')[0]
+            toCity = toCity.split('\r')[0].decode('utf-8')
             print toCity
             if toCityFind:
                 pass
@@ -224,15 +226,19 @@ def start():
             for hour in range(EXCEL_SHEET_NUMBER):
                 startSheet = startWB.get_sheet_by_name(str(hour))
                 arriveSheet = arriveWB.get_sheet_by_name(str(hour))
+	        sumSheet = sumWB.get_sheet_by_name("sum")
                 if number == '/':
                     startSheet.cell(row=fromCityIndex + 2, column=toCityIndex + 2, value='/')
                     arriveSheet.cell(row=fromCityIndex + 2, column=toCityIndex + 2, value='/')
+                    sumSheet.cell(row=fromCityIndex + 2, column=toCityIndex + 2, value='/')                    
                 else:
                     startSheet.cell(row=fromCityIndex + 2, column=toCityIndex + 2, value=str(startTimeMap[hour]))
                     arriveSheet.cell(row=fromCityIndex + 2, column=toCityIndex + 2, value=str(arriveTimeMap[hour]))
+                    sumSheet.cell(row=fromCityIndex + 2, column=toCityIndex + 2, value=str(number))                    
 
     startWB.save(filename=SAVE_PATH + START_EXCEL_NAME)
     arriveWB.save(filename=SAVE_PATH + ARRIVE_EXCEL_NAME)
+    sumWB.save(filename=SAVE_PATH + SUM_EXCEL_NAME)
 
     print("*********all over*************")
 
@@ -250,6 +256,7 @@ def initialWB():
     files = [f for f in os.listdir(SAVE_PATH) if os.path.isfile(SAVE_PATH + f)]
     startInitial = False
     arriveInitial = False
+    sumInitial = False
     for f in files:
         if f == ARRIVE_EXCEL_NAME:
             global arriveWB
@@ -257,12 +264,21 @@ def initialWB():
             arriveInitial = True
         elif f == START_EXCEL_NAME:
             global startWB
-            startWB = load_workbook(filename=SAVE_PATH + ARRIVE_EXCEL_NAME)
+            startWB = load_workbook(filename=SAVE_PATH + START_EXCEL_NAME)
             startInitial = True
+        elif f == SUM_EXCEL_NAME:
+            global sumWB
+            sumWB = load_workbook(filename=SAVE_PATH + SUM_EXCEL_NAME)
+            sumInitial = True
     if not startInitial:
         writeSheetCityName(startWB)
     if not arriveInitial:
         writeSheetCityName(arriveWB)
+    if not sumInitial:
+        ws = sumWB.create_sheet(title="sum")
+        for i in range(len(cityList)):
+            ws.cell(column=1, row=i + 2, value=cityList[i].split('\n')[0])
+            ws.cell(column=i + 2, row=1, value=cityList[i].split('\n')[0])
 
 
 # 在excel中每个sheet页第一行和第一列写城市名
