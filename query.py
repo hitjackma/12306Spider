@@ -128,7 +128,7 @@ def getStationByName(name):
 
 
 def initCitiesList():
-    f = open(PWD + "/cities1.txt", "r")
+    f = open(PWD + "/cities.txt", "r")
     global cityList
     cityList = f.readlines()
     f.close()
