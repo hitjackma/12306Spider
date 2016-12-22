@@ -80,7 +80,7 @@ def queryTickets(queryDate, from_station_code, to_station_code):
                 outfile.write(unicode(json.dumps(saveData, ensure_ascii=False)))
             outfile.close()
             startWB.save(SAVE_PATH + START_EXCEL_NAME)
-            startWB.save(SAVE_PATH + ARRIVE_EXCEL_NAME)
+            arriveWB.save(SAVE_PATH + ARRIVE_EXCEL_NAME)
             sumWB.save(SAVE_PATH + SUM_EXCEL_NAME)
             print "休息23秒，准备重新启动程序"
             time.sleep(23)
