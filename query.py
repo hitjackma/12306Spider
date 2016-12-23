@@ -135,7 +135,7 @@ def initCitiesList():
 
 
 def start():
-    print(u"hello，运行中不要打开result目录中的start.xls和arrive.xls，如果打开了现在关闭还来得及")
+    #print(u"hello，运行中不要打开result目录中的start.xls和arrive.xls，如果打开了现在关闭还来得及")
     initStation()
     initCitiesList()
     initialWB()
